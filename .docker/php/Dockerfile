@@ -1,25 +1,51 @@
 FROM php:7.4-fpm
 
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    libzip-dev \
-    libmagickwand-dev \
-    mariadb-client
+        git \
+        zip \
+        curl \
+        htop \
+        unzip \
+        libpng-dev \
+        libzip-dev \
+        supervisor \
+        nginx-light \
+        libjpeg-dev \
+        libtidy-dev \
+        libmcrypt-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libonig-dev \
+        zlib1g-dev \
+        libxml2-dev \
+        graphviz \
+    && docker-php-ext-configure gd \
+    && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-install pdo_mysql \
+    && docker-php-ext-install mysqli \
+    && docker-php-ext-install mbstring \
+    && docker-php-ext-install zip \
+    && docker-php-ext-install exif \
+    && docker-php-ext-install pcntl \
+    && docker-php-ext-install zip \
+    && docker-php-ext-install gd \
+    && docker-php-source delete
+
+# php.ini
+COPY ./php/php.ini /usr/local/etc/php/conf.d/
+COPY ./php/xdebug.ini /usr/local/etc/php/conf.d/
+
+# XDebug
+ARG WITH_XDEBUG=false
+RUN if [ $WITH_XDEBUG = "true" ] ; then \
+        pecl install xdebug; \
+        docker-php-ext-enable xdebug; \
+        echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+        echo "xdebug.client_host = host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+    fi ;
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN pecl install imagick \
-    && docker-php-ext-enable imagick
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
 # Enable OPCache
 RUN docker-php-ext-enable opcache
