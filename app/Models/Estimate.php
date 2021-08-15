@@ -130,11 +130,6 @@ class Estimate extends Model implements HasMedia
         return $this->hasMany(Tax::class);
     }
 
-    public function estimateTemplate()
-    {
-        return $this->belongsTo('Crater\Models\EstimateTemplate');
-    }
-
     public function getEstimateNumAttribute()
     {
         $position = $this->strposX($this->estimate_number, "-", 1) + 1;
@@ -315,8 +310,7 @@ class Estimate extends Model implements HasMedia
         return Estimate::with([
             'items.taxes',
             'user',
-            'estimateTemplate',
-            'taxes',
+            'taxes'
         ])
             ->find($estimate->id);
     }
@@ -341,11 +335,10 @@ class Estimate extends Model implements HasMedia
         }
 
         return Estimate::with([
-            'items.taxes',
-            'user',
-            'estimateTemplate',
-            'taxes',
-        ])
+                'items.taxes',
+                'user',
+                'taxes'
+            ])
             ->find($this->id);
     }
 
@@ -402,36 +395,25 @@ class Estimate extends Model implements HasMedia
 
     public function getPDFData()
     {
-        $taxTypes = [];
-        $taxes = [];
-        $labels = [];
+        $taxes = collect();
 
         if ($this->tax_per_item === 'YES') {
             foreach ($this->items as $item) {
                 foreach ($item->taxes as $tax) {
-                    if (! in_array($tax->name, $taxTypes)) {
-                        array_push($taxTypes, $tax->name);
-                        array_push($labels, $tax->name.' ('.$tax->percent.'%)');
+                    $found = $taxes->filter(function ($item) use ($tax) {
+                        return $item->tax_type_id == $tax->tax_type_id;
+                    })->first();
+
+                    if ($found) {
+                        $found->amount += $tax->amount;
+                    } else {
+                        $taxes->push($tax);
                     }
                 }
-            }
-
-            foreach ($taxTypes as $taxType) {
-                $total = 0;
-
-                foreach ($this->items as $item) {
-                    foreach ($item->taxes as $tax) {
-                        if ($tax->name == $taxType) {
-                            $total += $tax->amount;
-                        }
-                    }
-                }
-
-                array_push($taxes, $total);
             }
         }
 
-        $estimateTemplate = EstimateTemplate::find($this->estimate_template_id);
+        $estimateTemplate = self::find($this->id)->template_name;
 
         $company = Company::find($this->company_id);
         $locale = CompanySetting::getSetting('language', $company->id);
@@ -447,15 +429,18 @@ class Estimate extends Model implements HasMedia
             'shipping_address' => $this->getCustomerShippingAddress(),
             'billing_address' => $this->getCustomerBillingAddress(),
             'notes' => $this->getNotes(),
-            'labels' => $labels,
             'taxes' => $taxes,
         ]);
 
-        return PDF::loadView('app.pdf.estimate.'.$estimateTemplate->view);
+        return PDF::loadView('app.pdf.estimate.'.$estimateTemplate);
     }
 
     public function getCompanyAddress()
     {
+        if ($this->company && (! $this->company->address()->exists())) {
+            return false;
+        }
+
         $format = CompanySetting::getSetting('estimate_company_address_format', $this->company_id);
 
         return $this->getFormattedString($format);
@@ -463,6 +448,10 @@ class Estimate extends Model implements HasMedia
 
     public function getCustomerShippingAddress()
     {
+        if ($this->user && (! $this->user->shippingAddress()->exists())) {
+            return false;
+        }
+
         $format = CompanySetting::getSetting('estimate_shipping_address_format', $this->company_id);
 
         return $this->getFormattedString($format);
@@ -470,6 +459,10 @@ class Estimate extends Model implements HasMedia
 
     public function getCustomerBillingAddress()
     {
+        if ($this->user && (! $this->user->billingAddress()->exists())) {
+            return false;
+        }
+
         $format = CompanySetting::getSetting('estimate_billing_address_format', $this->company_id);
 
         return $this->getFormattedString($format);

@@ -36,6 +36,7 @@ class DatabaseConfigurationController extends Controller
 
         if (array_key_exists("success", $results)) {
             Artisan::call('key:generate --force');
+            Artisan::call('optimize:clear');
             Artisan::call('config:clear');
             Artisan::call('cache:clear');
             Artisan::call('storage:link');
@@ -76,14 +77,6 @@ class DatabaseConfigurationController extends Controller
 
                 break;
 
-            case 'sqlsrv':
-                $databaseData = [
-                    'driver' => 'sqlsrv',
-                    'host' => '127.0.0.1',
-                    'port' => 1433,
-                ];
-
-                break;
         }
 
 

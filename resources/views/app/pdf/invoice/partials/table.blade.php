@@ -7,6 +7,9 @@
         @if($invoice->discount_per_item === 'YES')
         <th class="pl-10 text-right item-table-heading">@lang('pdf_discount_label')</th>
         @endif
+        @if($invoice->tax_per_item === 'YES')
+        <th class="pl-10 text-right item-table-heading">@lang('pdf_tax_label')</th>
+        @endif
         <th class="text-right item-table-heading">@lang('pdf_amount_label')</th>
     </tr>
     @php
@@ -54,6 +57,15 @@
                 </td>
             @endif
 
+            @if($invoice->tax_per_item === 'YES')
+                <td
+                    class="pl-10 text-right item-cell"
+                    style="vertical-align: top;"
+                >
+                    {!! format_money_pdf($item->tax, $invoice->user->currency) !!}
+                </td>
+            @endif
+
             <td
                 class="text-right item-cell"
                 style="vertical-align: top;"
@@ -79,16 +91,16 @@
         </tr>
 
         @if ($invoice->tax_per_item === 'YES')
-            @for ($i = 0; $i < count($labels); $i++)
+            @foreach ($taxes as $tax)
                 <tr>
                     <td class="border-0 total-table-attribute-label">
-                        {{$labels[$i]}}
+                        {{$tax->name.' ('.$tax->percent.'%)'}}
                     </td>
                     <td class="py-2 border-0 item-cell total-table-attribute-value">
-                        {!! format_money_pdf($taxes[$i], $invoice->user->currency) !!}
+                        {!! format_money_pdf($tax->amount, $invoice->user->currency) !!}
                     </td>
                 </tr>
-            @endfor
+            @endforeach
         @else
             @foreach ($invoice->taxes as $tax)
                 <tr>

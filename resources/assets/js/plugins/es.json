@@ -87,7 +87,7 @@
     "choose_note": "Elegir nota",
     "no_note_found": "No se encontró ninguna nota",
     "insert_note": "Insertar una nota",
-    "copied_pdf_url_clipboard": "Copied PDF url to clipboard!"
+    "copied_pdf_url_clipboard": "Copiar Url al portapapeles"
   },
   "dashboard": {
     "select_year": "Seleccionar año",
@@ -1167,6 +1167,7 @@
   "pdf_quantity_label": "Cantidad",
   "pdf_price_label": "Precio",
   "pdf_discount_label": "Descuento",
+  "pdf_tax_label": "Impuesto",
   "pdf_amount_label": "Cantidad",
   "pdf_subtotal": "Subtotal",
   "pdf_total": "Total",
