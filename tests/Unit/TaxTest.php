@@ -5,23 +5,11 @@ use Crater\Models\EstimateItem;
 use Crater\Models\Invoice;
 use Crater\Models\InvoiceItem;
 use Crater\Models\Tax;
-use Crater\Models\User;
 use Illuminate\Support\Facades\Artisan;
-use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
     Artisan::call('db:seed', ['--class' => 'DemoSeeder', '--force' => true]);
-
-    $user = User::where('role', 'super admin')->first();
-
-    $this->withHeaders([
-        'company' => $user->company_id,
-    ]);
-    Sanctum::actingAs(
-        $user,
-        ['*']
-    );
 });
 
 test('tax belongs to tax type', function () {
@@ -34,6 +22,12 @@ test('tax belongs to invoice', function () {
     $tax = Tax::factory()->forInvoice()->create();
 
     $this->assertTrue($tax->invoice()->exists());
+});
+
+test('tax belongs to recurring invoice', function () {
+    $tax = Tax::factory()->forRecurringInvoice()->create();
+
+    $this->assertTrue($tax->recurringInvoice()->exists());
 });
 
 test('tax belongs to estimate', function () {

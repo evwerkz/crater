@@ -1,34 +1,29 @@
 <?php
 
 use Crater\Models\Company;
-use Crater\Models\User;
 use Illuminate\Support\Facades\Artisan;
-use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
     Artisan::call('db:seed', ['--class' => 'DemoSeeder', '--force' => true]);
-
-    $user = User::find(1);
-    $this->withHeaders([
-        'company' => $user->company_id,
-    ]);
-    Sanctum::actingAs(
-        $user,
-        ['*']
-    );
 });
 
-test('company has one user', function () {
-    $company = Company::factory()->hasUser()->create();
+test('company has many customers', function () {
+    $company = Company::factory()->hasCustomers()->create();
 
-    $this->assertTrue($company->user()->exists());
+    $this->assertTrue($company->customers()->exists());
 });
 
-test('company has many company setings', function () {
+test('company has many company settings', function () {
     $company = Company::factory()->hasSettings(5)->create();
 
     $this->assertCount(5, $company->settings);
 
     $this->assertTrue($company->settings()->exists());
+});
+
+test('a company belongs to many users', function () {
+    $company = Company::factory()->hasUsers(5)->create();
+
+    $this->assertInstanceOf('Illuminate\Database\Eloquent\Collection', $company->users);
 });

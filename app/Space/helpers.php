@@ -3,7 +3,60 @@
 use Crater\Models\CompanySetting;
 use Crater\Models\Currency;
 use Crater\Models\CustomField;
+use Crater\Models\Setting;
 use Illuminate\Support\Str;
+
+/**
+ * Get company setting
+ *
+ * @param $company_id
+ * @return string
+ */
+function get_company_setting($key, $company_id)
+{
+    if (\Storage::disk('local')->has('database_created')) {
+        return CompanySetting::getSetting($key, $company_id);
+    }
+}
+
+/**
+ * Get app setting
+ *
+ * @param $company_id
+ * @return string
+ */
+function get_app_setting($key)
+{
+    if (\Storage::disk('local')->has('database_created')) {
+        return Setting::getSetting($key);
+    }
+}
+
+/**
+ * Get page title
+ *
+ * @param $company_id
+ * @return string
+ */
+function get_page_title($company_id)
+{
+    $routeName = Route::currentRouteName();
+
+    $pageTitle = null;
+    $defaultPageTitle = 'Crater - Self Hosted Invoicing Platform';
+
+    if (\Storage::disk('local')->has('database_created')) {
+        if ($routeName === 'customer.dashboard') {
+            $pageTitle = CompanySetting::getSetting('customer_portal_page_title', $company_id);
+
+            return $pageTitle ? $pageTitle : $defaultPageTitle;
+        }
+
+        $pageTitle = Setting::getSetting('admin_page_title');
+
+        return $pageTitle ? $pageTitle : $defaultPageTitle;
+    }
+}
 
 /**
  * Set Active Path
@@ -132,4 +185,12 @@ function getRelatedSlugs($type, $slug, $id = 0)
         ->where('model_type', $type)
         ->where('id', '<>', $id)
         ->get();
+}
+
+function respondJson($error, $message)
+{
+    return response()->json([
+        'error' => $error,
+        'message' => $message
+    ], 422);
 }
